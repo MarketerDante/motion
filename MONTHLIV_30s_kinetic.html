@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MONTHLIV | ���ھ��� A?Z</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#101a18;color:#f5f4ee;font-family:Arial,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;display:flex;align-items:center;justify-content:center;gap:28px;padding:20px}.frame{width:min(52vw,430px);aspect-ratio:9/16;box-shadow:0 24px 80px #0009;border-radius:16px;overflow:hidden;background:#12201d}canvas{width:100%;height:100%;display:block}.panel{max-width:290px;line-height:1.7;color:#d8e0dc;font-size:14px}.panel strong{font-size:20px;color:#f3f2e8}.panel button{display:inline-block;border:0;border-radius:9px;padding:13px 18px;font-size:14px;font-weight:800;margin:6px 6px 6px 0;cursor:pointer;background:#ecf45b;color:#13211e}.panel button.secondary{background:#e8eee9;color:#13211e}.panel small{display:block;color:#99aaa3;margin-top:12px}@media(max-width:720px){body{flex-direction:column;padding:14px}.frame{width:min(82vw,430px)}.panel{text-align:center;max-width:90vw}}
+</style></head><body>
+<div class="frame"><canvas id="c" width="540" height="960"></canvas></div>
+<div class="panel"><strong>MONTHLIV ? 30�� ��� �Ұ�</strong><p>���Ի���� ���� Ű��ƽ Ÿ�����׷���<br>���� 9:16 �� ������ �������� �Ž� ����</p><button id="play">�� �̸� ����</button><small id="status">MP4 ����� ���� �۾� ȯ�濡�� �������� �ʾ�, �� ���Ͽ����� �̸����⸸ �����մϴ�.</small></div>
+<script>
+const c=document.querySelector('#c'),x=c.getContext('2d');const W=540,H=960,D=30,FPS=24;
+const scenes=[
+{a:'���ھ��� A?Z',b:'���� �غ� ������ �Բ�',tag:'MONTHLIV',start:0,end:3.0},
+{a:'������ ã��',b:'���ɼ��� �н��ϴ�',tag:'01  ���� �м�',start:3,end:6},
+{a:'���� ���㰡',b:'���ʺ��� �Ĳ��ϰ�',tag:'02  ��� �� ���㰡',start:6,end:9},
+{a:'�����ϰ�',b:'�귣�带 ������',tag:'03  ���� �� ������',start:9,end:12},
+{a:'���忡�� �����',b:'�ϼ����� �����մϴ�',tag:'04  �ð� ����',start:12,end:15},
+{a:'������ ������ ä��',b:'�ӹ� �غ� ��Ĩ�ϴ�',tag:'05  ��ġ �� ���� �غ�',start:15,end:18},
+{a:'ǥ��ȭ�� 21��',b:'���忡�� ���� ���Ͽ�',tag:'A?Z TURNKEY PROCESS',start:18,end:21},
+{a:'�׸��� ����',b:'������ ��մϴ�',tag:'06  � �� ���� ����',start:21,end:24},
+{a:'���ÿ� �� ȣ�ڽ�����',b:'����� �Ϸ縦 �ٲٴ� ����',tag:'MONTHLIV LOCATIONS',start:24,end:27},
+{a:'�츮�� ����',b:'�������� ���ο� ������ �˴ϴ�',tag:'WELCOME TO MONTHLIV',start:27,end:30}];
+const colors=['#ecf45b','#ff946b','#f5f4ee','#a6e7d3'];let seed=1234;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+const dots=Array.from({length:52},()=>({x:rand()*W,y:rand()*H,r:1+rand()*4,s:.35+rand()*.9,p:rand()*6.28,color:colors[Math.floor(rand()*3)]}));
+function clamp(v){return Math.max(0,Math.min(1,v))}function ease(v){v=clamp(v);return v*v*(3-2*v)}function rr(a,b,t){return a+(b-a)*t}
+function draw(t){
+const si=Math.max(0,scenes.findIndex(s=>t>=s.start&&t<s.end));const s=scenes[si],local=t-s.start,phase=local/(s.end-s.start);
+let g=x.createLinearGradient(0,0,540,960);g.addColorStop(0,'#183b32');g.addColorStop(.52,'#112620');g.addColorStop(1,'#0d1717');x.fillStyle=g;x.fillRect(0,0,W,H);
+const pulse=Math.pow(Math.max(0,Math.sin(t*Math.PI*2)),10);
+x.save();x.globalAlpha=.05+pulse*.055;x.strokeStyle='#edfa78';x.lineWidth=2;for(let i=0;i<9;i++){let y=100+i*103+Math.sin(t*2+i)*8;x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke()}x.restore();
+dots.forEach(d=>{let yy=(d.y-t*(25+d.s*19)+H)%H,xx=d.x+Math.sin(t*.7+d.p)*9;x.globalAlpha=.18+.18*(.5+.5*Math.sin(t*2+d.p));x.fillStyle=d.color;x.beginPath();x.arc(xx,yy,d.r*(1+pulse*.35),0,Math.PI*2);x.fill()});x.globalAlpha=1;
+x.fillStyle='#ecf45b';x.font='800 16px Arial';x.textAlign='left';x.fillText('MONTHLIV',38,58);x.fillStyle='#9fb4aa';x.font='12px Arial';x.textAlign='right';x.fillText('STAY BUSINESS, MADE HUMAN',502,58);
+let enter=ease(local/.34),exit=1-ease((phase-.83)/.17),alpha=enter*exit,scale=rr(.82,1,enter),big=si===0||si===6||si===9;
+x.textAlign='center';x.textBaseline='middle';x.globalAlpha=alpha;
+x.save();x.translate(270,420);x.scale(scale,scale);x.fillStyle=si%3===1?'#ecf45b':'#f5f4ee';x.font='900 '+(big?59:54)+'px "Malgun Gothic",Arial,sans-serif';x.shadowColor='#ecf45b55';x.shadowBlur=10+pulse*12;x.fillText(s.a,0,0);x.restore();
+x.save();x.translate(270,501);x.scale(scale,scale);x.fillStyle=si%3===1?'#f5f4ee':'#bde8d5';x.font='800 '+(s.b.length>15?32:42)+'px "Malgun Gothic",Arial,sans-serif';x.fillText(s.b,0,0);x.restore();x.globalAlpha=1;
+x.fillStyle='#ecf45b';x.fillRect(185,579,170,3);x.textAlign='center';x.fillStyle='#d0ddd6';x.font='700 14px Arial,"Malgun Gothic",sans-serif';x.fillText(s.tag,270,618);
+x.fillStyle='#ffffff28';x.fillRect(40,876,460,3);x.fillStyle='#ecf45b';x.fillRect(40,876,460*t/D,3);x.fillStyle='#d7e1dc';x.font='12px Arial';x.textAlign='right';x.fillText('00:'+String(Math.floor(t)).padStart(2,'0')+'  /  00:30',500,901);x.textAlign='center';x.fillStyle='#9db0a7';x.font='13px "Malgun Gothic",Arial,sans-serif';x.fillText('������ �����, ��ϰ�, ������ �����մϴ�',270,925);
+}
+function audioBuffer(ctx){const sr=ctx.sampleRate,n=sr*D,buf=ctx.createBuffer(2,n,sr),L=buf.getChannelData(0),R=buf.getChannelData(1),bpm=120,step=60/bpm/2,scale=[0,2,4,7,9,12,9,7,4,2,7,9,12,14,12,9],root=[55,49,44,52],chords=[[0,4,7],[0,3,7],[0,4,7],[0,3,7]];function add(freq,start,dur,amp,type,pan=0){let pos=Math.floor(start*sr),len=Math.min(Math.floor(dur*sr),n-pos),ph=0;for(let j=0;j<len;j++){let t=j/sr,env=Math.min(1,t/.012)*Math.exp(-t/(dur*.45)),v;if(type==='kick')v=Math.sin(2*Math.PI*(freq*t-17*t*t))*Math.exp(-t/.12);else if(type==='noise')v=(Math.random()*2-1)*Math.exp(-t/.035);else{v=Math.sin(ph);ph+=2*Math.PI*freq/sr}let z=v*env*amp,k=pos+j;L[k]+=z*(pan<=0?1:1-pan);R[k]+=z*(pan>=0?1:1+pan)}}for(let b=0;b<60;b++){let tm=b*step,bar=Math.floor(b/8),r=root[bar%4];add(46,tm,.18,b%4===0?.23:.14,'kick');if(b%2===1)add(1800,tm,.07,.06,'noise',.1);add(r,tm,.28,.075,'tone',-.1);add(220*Math.pow(2,scale[b%16]/12),tm+.015,.22,.052,'tone',.18*Math.sin(b));if(b%2===0)chords[bar%4].forEach((v,j)=>add(r*4*Math.pow(2,v/12),tm,.33,j===0?.025:.018,'tone',j===0?-.2:.2))}for(let q=0;q<120;q++)add([880,1046.5,1318.5,1174.7,1568,1318.5][q%6],q*step+.12,.09,.026,'tone',Math.sin(q*2)*.5);for(let i=0;i<n;i++){let fade=Math.min(1,i/(sr*.12),(n-i)/(sr*.25));L[i]=Math.tanh(L[i]*1.3)*fade;R[i]=Math.tanh(R[i]*1.3)*fade}return buf}
+function wavBlob(buf){const channels=buf.numberOfChannels,len=buf.length,bytes=44+len*channels*2,ab=new ArrayBuffer(bytes),v=new DataView(ab);function str(o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))}str(0,'RIFF');v.setUint32(4,bytes-8,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,channels,true);v.setUint32(24,buf.sampleRate,true);v.setUint32(28,buf.sampleRate*channels*2,true);v.setUint16(32,channels*2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,len*channels*2,true);let off=44;for(let i=0;i<len;i++)for(let c=0;c<channels;c++){let s=Math.max(-1,Math.min(1,buf.getChannelData(c)[i]));v.setInt16(off,s<0?s*32768:s*32767,true);off+=2}return new Blob([ab],{type:'audio/wav'})}
+let raf,playing=false,startAt=0;function previewFrame(now){if(!playing)return;let t=(now-startAt)/1000;if(t>=D){playing=false;draw(D-.01);return}draw(t);raf=requestAnimationFrame(previewFrame)}
+document.querySelector('#play').onclick=()=>{if(playing)return;playing=true;startAt=performance.now();raf=requestAnimationFrame(previewFrame);try{const ac=new AudioContext(),src=ac.createBufferSource(),g=ac.createGain();src.buffer=audioBuffer(ac);g.gain.value=.68;src.connect(g);g.connect(ac.destination);src.start();src.onended=()=>ac.close()}catch(e){}};
+draw(0);
+</script></body></html>
+
