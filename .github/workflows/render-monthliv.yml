@@ -1,0 +1,57 @@
+name: Render MONTHLIV MP4
+on:
+  push:
+    paths:
+      - '.github/workflows/render-monthliv.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install rendering tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-nanum
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render frames and original music
+        run: |
+          cat > /tmp/render-monthliv.cjs <<'JS'
+          const { chromium } = require(process.cwd() + '/node_modules/playwright');
+          const fs = require('fs');
+          (async () => {
+            const browser = await chromium.launch({headless:true, args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});
+            const page = await browser.newPage({viewport:{width:540,height:960},deviceScaleFactor:1});
+            await page.goto('file://' + process.cwd() + '/MONTHLIV_30s_kinetic.html');
+            await page.addStyleTag({content:"body{display:block!important;padding:0!important;margin:0!important}.frame{width:540px!important;height:960px!important;border-radius:0!important;box-shadow:none!important}.panel{display:none!important}canvas{width:540px!important;height:960px!important}"});
+            await page.evaluate(() => document.fonts.ready);
+            fs.mkdirSync('/tmp/monthliv-frames',{recursive:true});
+            for(let i=0;i<720;i++){
+              const png=await page.evaluate((i)=>{draw(i/24);return document.querySelector('canvas').toDataURL('image/png').split(',')[1]},i);
+              fs.writeFileSync('/tmp/monthliv-frames/'+String(i).padStart(4,'0')+'.png',Buffer.from(png,'base64'));
+              if(i%120===0)console.log('frame',i);
+            }
+            const wav=await page.evaluate(async()=>{const ac=new AudioContext({sampleRate:44100});const b=wavBlob(audioBuffer(ac));const data=await b.arrayBuffer();let bytes=new Uint8Array(data),parts=[];for(let i=0;i<bytes.length;i+=32768)parts.push(String.fromCharCode(...bytes.subarray(i,i+32768)));await ac.close();return btoa(parts.join(''))});
+            fs.writeFileSync('/tmp/monthliv.wav',Buffer.from(wav,'base64'));
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          node /tmp/render-monthliv.cjs
+      - name: Encode MP4
+        run: |
+          ffmpeg -hide_banner -loglevel error -y -framerate 24 -i /tmp/monthliv-frames/%04d.png -i /tmp/monthliv.wav -t 30 -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart MONTHLIV_30s.mp4
+          ffprobe -v error -show_entries format=duration:stream=codec_name,width,height -of default=noprint_wrappers=1 MONTHLIV_30s.mp4
+      - name: Commit MP4 to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MONTHLIV_30s.mp4
+          git commit -m "Add MONTHLIV 30-second MP4"
+          git push
